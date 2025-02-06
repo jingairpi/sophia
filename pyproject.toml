@@ -1,0 +1,23 @@
+[project]
+name = "sophia"
+version = "0.1.0"
+description = "SOPHIA: Self-learning Open-source Platform for High-performance Intelligent Applications"
+authors = [
+    {name = "Jing Ai",email = "jingairpi@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flax (>=0.10.2,<0.11.0)"
+]
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.1.0"
+pytest = "^7.0.0"
+pre-commit = "^2.19.0"
+isort = "^6.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
