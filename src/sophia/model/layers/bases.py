@@ -122,3 +122,25 @@ class FeedForwardNetwork(nn.Module, ABC):
         Returns:
             Updated tensor after passing through the feed-forward network.
         """
+
+
+class ProjectionLayer(nn.Module, ABC):
+    """
+    Abstract base class for projection layers.
+    A projection layer maps hidden representations to an output space.
+    """
+
+    @abstractmethod
+    def __call__(self, inputs, *args, **kwargs):
+        """
+        Project inputs from one space to another.
+
+        Args:
+            inputs: Input tensor.
+            *args: Additional positional arguments.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            A tensor that represents the projected outputs.
+        """
+        pass
