@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import pytest
 
-from sophia.model.layers.gelu import GELUActivation
+from sophia.model.layers.activations import GELUActivation
 
 
 def test_gelu_activation_output_shape():
