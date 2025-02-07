@@ -3,8 +3,8 @@ import jax.numpy as jnp
 import pytest
 from flax import linen as nn
 
+from sophia.model.layers.activations import GELUActivation
 from sophia.model.layers.feed_forwards import PositionwiseFeedForward
-from sophia.model.layers.gelu import GELUActivation
 
 
 @pytest.mark.parametrize(
