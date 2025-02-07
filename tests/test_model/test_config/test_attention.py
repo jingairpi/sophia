@@ -52,7 +52,7 @@ def test_attention_config_invalid_target_not_subclass():
             num_heads=8,
             dropout_rate=0.2,
         )
-    assert "must be a subclass of `AttentionLayer`" in str(excinfo.value)
+    assert "must be a subclass of AttentionLayer" in str(excinfo.value)
 
 
 def test_attention_config_invalid_fully_qualified_name():
