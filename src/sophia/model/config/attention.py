@@ -1,5 +1,3 @@
-from typing import ClassVar, Type
-
 from sophia.model.config.base import BaseConfig
 from sophia.model.layers.bases import AttentionLayer
 
@@ -13,7 +11,7 @@ class AttentionConfig(BaseConfig):
     to specify different attention implementations.
     """
 
-    expected_base_class: ClassVar[Type[AttentionLayer]] = AttentionLayer
+    expected_base_class = AttentionLayer
 
     target: str
     hidden_size: int
