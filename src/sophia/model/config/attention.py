@@ -10,7 +10,7 @@ class AttentionConfig(BaseConfig):
     """
     Configuration for an attention module.
 
-    The 'target_' field should be a fully qualified class name whose class is a subclass
+    The 'target' field should be a fully qualified class name whose class is a subclass
     of `AttentionLayer`. This field must be provided in the configuration (or overridden)
     to specify different attention implementations.
     """
