@@ -2,7 +2,6 @@ import jax.numpy as jnp
 from flax import linen as nn
 
 from .bases import AttentionLayer
-from .normalizations import LayerNormalization
 
 
 class MultiHeadDotProductAttention(AttentionLayer):
@@ -55,7 +54,7 @@ class MultiHeadDotProductAttention(AttentionLayer):
 
         # Scaled dot-product attention
         scores = jnp.einsum("bhqd,bhkd->bhqk", q, k) / jnp.sqrt(
-            head_dim
+            float(head_dim)
         )  # (B, num_heads, L, L)
 
         if attention_mask is not None:
