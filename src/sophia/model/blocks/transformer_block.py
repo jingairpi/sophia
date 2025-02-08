@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional, Type
 
 from flax import linen as nn
 
+from sophia.model.blocks.bases import TransformerBlockBase
 from sophia.model.layers.bases import (
     AttentionLayer,
     FeedForwardNetwork,
@@ -9,7 +10,7 @@ from sophia.model.layers.bases import (
 )
 
 
-class TransformerBlock(nn.Module):
+class TransformerBlock(TransformerBlockBase):
     """
     A generic Transformer block that uses an attention layer, a feed-forward network,
     and two normalization layers. This block supports both pre- and post-normalization
