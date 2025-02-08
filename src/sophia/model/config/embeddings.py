@@ -28,5 +28,5 @@ class PositionalEmbeddingConfig(BaseConfig):
     expected_base_class = EmbeddingLayer
 
     target: str
-    max_length: int
+    max_seq_length: int
     hidden_size: int

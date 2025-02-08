@@ -1,24 +1,28 @@
+from typing import Any, Dict, Type
+
 from sophia.model.blocks.bases import TransformerBlockBase
-from sophia.model.config.attention import AttentionConfig
 from sophia.model.config.base import BaseConfig
-from sophia.model.config.feed_forward import FeedForwardConfig
-from sophia.model.config.normalization import NormalizationConfig
 
 
 class TransformerBlockConfig(BaseConfig):
     """
-    Configuration for a Transformer Block. This configuration is nested,
-    meaning that it contains the configurations for its internal components:
-    attention, feed-forward network, and normalization. Such a design is
-    especially useful when supporting various transformer variants.
+    Configuration for a Transformer Block.
+
+    This configuration specifies the parameters and submodule configurations for a transformer block,
+    including the attention mechanism, feed-forward network, and normalization. Rather than nesting
+    these sub-configurations, this design "flattens" them by using separate fields for the submodule's
+    target class (as a fully qualified class name) and its initialization keyword arguments.
 
     Attributes:
-        pre_norm: Whether to use pre-normalization (True) or post-normalization (False).
-        residual_scale: Scaling factor applied to residual connections.
-        dropout_rate: Dropout rate applied within the block.
-        attention: Nested configuration for the attention sub-module.
-        feed_forward: Nested configuration for the feed-forward sub-module.
-        norm: Nested configuration for the normalization sub-module.
+        pre_norm: Whether to apply normalization before (True) or after (False) the attention and feed-forward submodules.
+        residual_scale: A scaling factor applied to the residual connections.
+        dropout_rate: The dropout probability applied after attention and feed-forward operations.
+        attention_cls: Fully qualified class name for the attention submodule.
+        attention_kwargs: A dictionary of keyword arguments for initializing the attention submodule.
+        feed_forward_network_cls: Fully qualified class name for the feed-forward network submodule.
+        feed_forward_network_kwargs: A dictionary of keyword arguments for initializing the feed-forward network.
+        normalization_cls: Fully qualified class name for the normalization submodule.
+        normalization_kwargs: A dictionary of keyword arguments for initializing the normalization submodule.
     """
 
     expected_base_class = TransformerBlockBase
@@ -28,7 +32,9 @@ class TransformerBlockConfig(BaseConfig):
     residual_scale: float = 1.0
     dropout_rate: float = 0.1
 
-    # Nested configurations for the sub-modules.
-    attention: AttentionConfig
-    feed_forward: FeedForwardConfig
-    norm: NormalizationConfig
+    attention_cls: Type
+    attention_kwargs: Dict[str, Any]
+    feed_forward_network_cls: Type
+    feed_forward_network_kwargs: Dict[str, Any]
+    normalization_cls: Type
+    normalization_kwargs: Dict[str, Any]

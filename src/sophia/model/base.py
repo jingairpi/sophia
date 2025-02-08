@@ -19,17 +19,3 @@ class Model(ABC):
         Returns:
             Initialized model parameters.
         """
-
-    @abstractmethod
-    def apply(self, params: Any, inputs: Any, **kwargs) -> Any:
-        """
-        Apply the model to the given inputs using the specified parameters.
-
-        Args:
-            params: Model parameters.
-            inputs: Input data.
-            **kwargs: Additional arguments.
-
-        Returns:
-            Model outputs.
-        """

@@ -67,7 +67,7 @@ sys.modules["dummy_position_module"] = dummy_position_module
 def test_position_embedding_config_valid():
     config = PositionalEmbeddingConfig(
         target="dummy_position_module.DummyPositionEmbedding",
-        max_length=1024,
+        max_seq_length=1024,
         hidden_size=512,
     )
     assert config.target == "dummy_position_module.DummyPositionEmbedding"
@@ -79,7 +79,7 @@ def test_position_embedding_config_invalid_target():
     with pytest.raises(ValidationError) as excinfo:
         PositionalEmbeddingConfig(
             target="dummy_position_module.NotPositionEmbedding",
-            max_length=1024,
+            max_seq_length=1024,
             hidden_size=512,
         )
     assert "must be a subclass of EmbeddingLayer" in str(excinfo.value)
