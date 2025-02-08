@@ -71,7 +71,7 @@ def test_position_embedding_config_valid():
         hidden_size=512,
     )
     assert config.target == "dummy_position_module.DummyPositionEmbedding"
-    assert config.max_length == 1024
+    assert config.max_seq_length == 1024
     assert config.hidden_size == 512
 
 
