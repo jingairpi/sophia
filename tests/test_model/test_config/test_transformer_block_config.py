@@ -6,7 +6,6 @@ from pydantic import ValidationError
 
 from sophia.model.blocks.bases import TransformerBlockBase
 from sophia.model.layers.bases import (
-    Activation,
     AttentionLayer,
     FeedForwardNetwork,
     NormalizationLayer,
@@ -20,7 +19,7 @@ from sophia.model.layers.bases import (
 dummy_activation_module = types.ModuleType("dummy_activation_module")
 
 
-class DummyActivation(Activation):
+class DummyActivation:
     def __call__(self, x, *args, **kwargs):
         return x
 
@@ -39,8 +38,7 @@ sys.modules["dummy_activation_module"] = dummy_activation_module
 dummy_attention_module = types.ModuleType("dummy_attention_module")
 
 
-# For testing, DummyAttention will be defined later in our dummy module.
-class DummyAttention(AttentionLayer):
+class DummyAttention:
     def __call__(self, x, *args, **kwargs):
         return x
 
@@ -52,7 +50,7 @@ sys.modules["dummy_attention_module"] = dummy_attention_module
 dummy_ffn_module = types.ModuleType("dummy_ffn_module")
 
 
-class DummyFeedForward(FeedForwardNetwork):
+class DummyFeedForward:
     def __call__(self, x, *args, **kwargs):
         return x
 
@@ -71,7 +69,7 @@ sys.modules["dummy_ffn_module"] = dummy_ffn_module
 dummy_norm_module = types.ModuleType("dummy_norm_module")
 
 
-class DummyNorm(NormalizationLayer):
+class DummyNorm:
     def __call__(self, x, *args, **kwargs):
         return x
 
@@ -119,48 +117,66 @@ from sophia.model.layers.bases import (
 )
 
 # -----------------------------------------------------------------------------
-# Create dummy nested configurations.
+# Create dummy flattened configurations.
 # -----------------------------------------------------------------------------
+# Instead of nested configs, we now build flattened dictionaries.
+dummy_attention_config_flat = {
+    "attention_cls": DummyAttention,  # actual class
+    "attention_kwargs": {
+        "hidden_size": 512,
+        "num_heads": 8,
+        "dropout_rate": 0.2,
+    },
+}
 
-# Create a dummy AttentionConfig instance.
-dummy_attention_config = AttentionConfig(
-    target="dummy_attention_module.DummyAttention",
-    hidden_size=512,
-    num_heads=8,
-    dropout_rate=0.2,
-)
+dummy_ffn_config_flat = {
+    "feed_forward_network_cls": DummyFeedForward,  # actual class
+    "feed_forward_network_kwargs": {
+        "hidden_size": 512,
+        "ffn_multiplier": 4,
+        "dropout_rate": 0.2,
+        # In Option B you directly pass an activation instance.
+        "activation": DummyActivation(),
+    },
+}
 
-# Create a dummy FeedForwardConfig instance.
-dummy_ffn_config = FeedForwardConfig(
-    target="dummy_ffn_module.DummyFeedForward",
-    hidden_size=512,
-    ffn_multiplier=4,
-    dropout_rate=0.2,
-    activation=ActivationConfig(target="dummy_activation_module.DummyActivation"),
-)
-
-# Create a dummy NormConfig instance.
-dummy_norm_config = NormalizationConfig(
-    target="dummy_norm_module.DummyNorm", epsilon=1e-5
-)
+dummy_norm_config_flat = {
+    "normalization_cls": DummyNorm,  # actual class
+    "normalization_kwargs": {"epsilon": 1e-5},
+}
 
 
 # -----------------------------------------------------------------------------
 # Tests for TransformerBlockConfig.
 # -----------------------------------------------------------------------------
 def test_transformer_block_config_valid():
+    # Create a flattened configuration for a transformer block.
     config = TransformerBlockConfig(
         target="dummy_block_module.DummyTransformerBlock",
         pre_norm=True,
         residual_scale=0.9,
         dropout_rate=0.1,
-        attention=dummy_attention_config,
-        feed_forward=dummy_ffn_config,
-        norm=dummy_norm_config,
+        # Provide flattened sub-configurations:
+        attention_cls=dummy_attention_config_flat["attention_cls"],
+        attention_kwargs=dummy_attention_config_flat["attention_kwargs"],
+        feed_forward_network_cls=dummy_ffn_config_flat["feed_forward_network_cls"],
+        feed_forward_network_kwargs=dummy_ffn_config_flat[
+            "feed_forward_network_kwargs"
+        ],
+        normalization_cls=dummy_norm_config_flat["normalization_cls"],
+        normalization_kwargs=dummy_norm_config_flat["normalization_kwargs"],
     )
+    # Check that top-level parameters are set correctly.
     assert config.target == "dummy_block_module.DummyTransformerBlock"
     assert config.pre_norm is True
     assert config.residual_scale == 0.9
+    # Check that the flattened keys exist.
+    assert "attention_cls" in config.model_dump()
+    assert "attention_kwargs" in config.model_dump()
+    assert "feed_forward_network_cls" in config.model_dump()
+    assert "feed_forward_network_kwargs" in config.model_dump()
+    assert "normalization_cls" in config.model_dump()
+    assert "normalization_kwargs" in config.model_dump()
 
 
 def test_transformer_block_config_invalid_target():
@@ -170,11 +186,15 @@ def test_transformer_block_config_invalid_target():
             pre_norm=True,
             residual_scale=0.9,
             dropout_rate=0.1,
-            attention=dummy_attention_config,
-            feed_forward=dummy_ffn_config,
-            norm=dummy_norm_config,
+            attention_cls=dummy_attention_config_flat["attention_cls"],
+            attention_kwargs=dummy_attention_config_flat["attention_kwargs"],
+            feed_forward_network_cls=dummy_ffn_config_flat["feed_forward_network_cls"],
+            feed_forward_network_kwargs=dummy_ffn_config_flat[
+                "feed_forward_network_kwargs"
+            ],
+            normalization_cls=dummy_norm_config_flat["normalization_cls"],
+            normalization_kwargs=dummy_norm_config_flat["normalization_kwargs"],
         )
-    # The error message should indicate that the target must be a subclass of TransformerBlock.
     assert "must be a subclass of TransformerBlock" in str(excinfo.value)
 
 
@@ -185,8 +205,13 @@ def test_transformer_block_config_invalid_fqname():
             pre_norm=True,
             residual_scale=0.9,
             dropout_rate=0.1,
-            attention=dummy_attention_config,
-            feed_forward=dummy_ffn_config,
-            norm=dummy_norm_config,
+            attention_cls=dummy_attention_config_flat["attention_cls"],
+            attention_kwargs=dummy_attention_config_flat["attention_kwargs"],
+            feed_forward_network_cls=dummy_ffn_config_flat["feed_forward_network_cls"],
+            feed_forward_network_kwargs=dummy_ffn_config_flat[
+                "feed_forward_network_kwargs"
+            ],
+            normalization_cls=dummy_norm_config_flat["normalization_cls"],
+            normalization_kwargs=dummy_norm_config_flat["normalization_kwargs"],
         )
     assert "must be a valid fully qualified class name" in str(excinfo.value)
