@@ -10,15 +10,17 @@ class FeedForwardConfig(BaseConfig):
     """
     Configuration for the feed-forward (FFN) network used in transformer models.
 
-    This configuration is flattened: instead of a nested activation configuration,
-    it uses separate fields for the activation function's target and keyword arguments.
+    This configuration is flattened and expects that the activation function is provided as
+    an already-instantiated callable. In other words, rather than providing a nested configuration
+    (with separate fields for the activation function’s target class and its initialization arguments),
+    the caller should pass the activation function instance directly.
 
     Attributes:
+        target: A fully qualified class name (as a string) of the feed-forward network implementation.
         hidden_size: The hidden size used in the feed-forward network.
         ffn_multiplier: The multiplier used to compute the intermediate dimension.
-        dropout_rate: The dropout rate applied within the FFN.
-        activation_cls: The fully qualified class name for the activation function.
-        activation_kwargs: A dictionary of keyword arguments for the activation function.
+        activation: An instance of the activation function to be applied between dense layers.
+        dropout_rate: The dropout rate applied within the feed-forward network.
     """
 
     expected_base_class = FeedForwardNetwork
