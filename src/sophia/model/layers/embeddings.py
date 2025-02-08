@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from flax import linen as nn
 
-from .bases import EmbeddingLayer
+from sophia.model.layers.bases import EmbeddingLayer
 
 
 class TokenEmbedding(EmbeddingLayer):

@@ -1,6 +1,6 @@
 from flax import linen as nn
 
-from .bases import Activation, FeedForwardNetwork
+from sophia.model.layers.bases import Activation, FeedForwardNetwork
 
 
 class PositionwiseFeedForward(FeedForwardNetwork):

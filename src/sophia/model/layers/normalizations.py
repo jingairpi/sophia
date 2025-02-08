@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from flax import linen as nn
 
-from .bases import NormalizationLayer
+from sophia.model.layers.bases import NormalizationLayer
 
 
 class LayerNormalization(NormalizationLayer):

@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from flax import linen as nn
 
-from .bases import AttentionLayer
+from sophia.model.layers.bases import AttentionLayer
 
 
 class MultiHeadDotProductAttention(AttentionLayer):
