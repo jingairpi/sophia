@@ -10,18 +10,19 @@ class TransformerBlockConfig(BaseConfig):
 
     This configuration specifies the parameters and submodule configurations for a transformer block,
     including the attention mechanism, feed-forward network, and normalization. Rather than nesting
-    these sub-configurations, this design "flattens" them by using separate fields for the submodule's
-    target class (as a fully qualified class name) and its initialization keyword arguments.
+    these sub-configurations (e.g. a field "attention" containing an AttentionConfig), this design
+    "flattens" them by using separate fields for each submodule's target class (as a fully qualified class name)
+    and its initialization keyword arguments.
 
     Attributes:
         pre_norm: Whether to apply normalization before (True) or after (False) the attention and feed-forward submodules.
         residual_scale: A scaling factor applied to the residual connections.
         dropout_rate: The dropout probability applied after attention and feed-forward operations.
-        attention_cls: Fully qualified class name for the attention submodule.
+        attention_cls: The class for the attention submodule.
         attention_kwargs: A dictionary of keyword arguments for initializing the attention submodule.
-        feed_forward_network_cls: Fully qualified class name for the feed-forward network submodule.
+        feed_forward_network_cls: The class for the feed-forward network submodule.
         feed_forward_network_kwargs: A dictionary of keyword arguments for initializing the feed-forward network.
-        normalization_cls: Fully qualified class name for the normalization submodule.
+        normalization_cls: The class for the normalization submodule.
         normalization_kwargs: A dictionary of keyword arguments for initializing the normalization submodule.
     """
 
