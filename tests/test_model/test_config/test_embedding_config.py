@@ -4,7 +4,10 @@ import types
 import pytest
 from pydantic import ValidationError
 
-from sophia.model.config.embeddings import PositionEmbeddingConfig, TokenEmbeddingConfig
+from sophia.model.config.embeddings import (
+    PositionalEmbeddingConfig,
+    TokenEmbeddingConfig,
+)
 from sophia.model.layers.bases import EmbeddingLayer
 
 
@@ -62,7 +65,7 @@ sys.modules["dummy_position_module"] = dummy_position_module
 
 
 def test_position_embedding_config_valid():
-    config = PositionEmbeddingConfig(
+    config = PositionalEmbeddingConfig(
         target="dummy_position_module.DummyPositionEmbedding",
         max_length=1024,
         hidden_size=512,
@@ -74,7 +77,7 @@ def test_position_embedding_config_valid():
 
 def test_position_embedding_config_invalid_target():
     with pytest.raises(ValidationError) as excinfo:
-        PositionEmbeddingConfig(
+        PositionalEmbeddingConfig(
             target="dummy_position_module.NotPositionEmbedding",
             max_length=1024,
             hidden_size=512,
