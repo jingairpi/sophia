@@ -2,7 +2,10 @@ from pydantic import BaseModel
 
 from sophia.model.config.activation import ActivationConfig
 from sophia.model.config.attention import AttentionConfig
-from sophia.model.config.embeddings import PositionEmbeddingConfig, TokenEmbeddingConfig
+from sophia.model.config.embeddings import (
+    PositionalEmbeddingConfig,
+    TokenEmbeddingConfig,
+)
 from sophia.model.config.feed_forward import FeedForwardConfig
 from sophia.model.config.normalization import NormalizationConfig
 from sophia.model.config.projection import OutputProjectionConfig
@@ -74,7 +77,7 @@ class GPT2Config(BaseModel):
 
     # Building block configurations.
     token_embedding: TokenEmbeddingConfig
-    positional_embedding: PositionEmbeddingConfig
+    positional_embedding: PositionalEmbeddingConfig
     transformer_block: TransformerBlockConfig
     projection: OutputProjectionConfig
 
@@ -92,7 +95,7 @@ class GPT2Config(BaseModel):
                 vocab_size=params.vocab_size,
                 hidden_size=params.hidden_size,
             ),
-            positional_embedding=PositionEmbeddingConfig(
+            positional_embedding=PositionalEmbeddingConfig(
                 target="sophia.model.layers.embeddings.PositionalEmbedding",
                 max_length=params.n_positions,
                 hidden_size=params.hidden_size,

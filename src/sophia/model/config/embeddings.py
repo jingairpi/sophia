@@ -17,7 +17,7 @@ class TokenEmbeddingConfig(BaseConfig):
     hidden_size: int
 
 
-class PositionEmbeddingConfig(BaseConfig):
+class PositionalEmbeddingConfig(BaseConfig):
     """
     Configuration for a positional embedding layer.
 
