@@ -105,16 +105,10 @@ class NotTransformerBlock:
 dummy_block_module.NotTransformerBlock = NotTransformerBlock
 sys.modules["dummy_block_module"] = dummy_block_module
 
-# Import the base transformer block class.
-from sophia.model.blocks.transformer_block import TransformerBlock
 from sophia.model.config.activation import ActivationConfig
 from sophia.model.config.attention import AttentionConfig
 from sophia.model.config.feed_forward import FeedForwardConfig
 from sophia.model.config.normalization import NormalizationConfig
-
-# -----------------------------------------------------------------------------
-# Now import configuration classes
-# -----------------------------------------------------------------------------
 from sophia.model.config.transformer_block import TransformerBlockConfig
 
 # For the purpose of this test, we also need the expected base classes for nested configs.
