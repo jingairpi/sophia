@@ -1,6 +1,6 @@
 import jax.nn
 
-from .bases import Activation
+from sophia.model.layers.bases import Activation
 
 
 class GELUActivation(Activation):
