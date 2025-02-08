@@ -1,9 +1,9 @@
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from sophia.model.config.base import BaseConfig
-from sophia.model.layers.bases import FeedForwardNetwork
+from sophia.model.layers.bases import Activation, FeedForwardNetwork
 
 
 class FeedForwardConfig(BaseConfig):
@@ -30,3 +30,12 @@ class FeedForwardConfig(BaseConfig):
     ffn_multiplier: int
     activation: Any
     dropout_rate: float = 0.1
+
+    @field_validator("activation", mode="before")
+    @classmethod
+    def check_activation(cls, v: Any) -> Any:
+        from sophia.model.layers.bases import Activation
+
+        if not isinstance(v, Activation):
+            raise ValueError("activation must be a subclass of Activation")
+        return v

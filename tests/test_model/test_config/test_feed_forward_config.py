@@ -39,7 +39,8 @@ class DummyActivation(Activation):
 
 # Create a dummy class that is NOT a subclass of Activation.
 class NotActivation:
-    pass
+    def __call__(self, x, *args, **kwargs):
+        return x
 
 
 dummy_activation_module = types.ModuleType("dummy_activation_module")
@@ -63,7 +64,8 @@ def test_feed_forward_config_valid():
     assert config.target == "dummy_ffn_module.DummyFeedForward"
     assert config.hidden_size == 512
     assert config.ffn_multiplier == 4
-    assert config.activation.target == "dummy_activation_module.DummyActivation"
+    assert callable(config.activation)
+    assert isinstance(config.activation, DummyActivation)
 
 
 def test_feed_forward_config_invalid_target():
@@ -88,7 +90,7 @@ def test_feed_forward_config_invalid_activation():
             hidden_size=512,
             ffn_multiplier=4,
             dropout_rate=0.2,
-            activation=DummyActivation(),
+            activation=NotActivation(),
         )
     # We expect the error message to mention "must be a subclass of Activation"
     assert "must be a subclass of Activation" in str(excinfo.value)
