@@ -1,9 +1,7 @@
-# model/layers/projection.py
-
 import jax.numpy as jnp
 from flax import linen as nn
 
-from .bases import ProjectionLayer
+from sophia.model.layers.bases import ProjectionLayer
 
 
 class OutputProjection(ProjectionLayer):
