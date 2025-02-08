@@ -26,9 +26,9 @@ class TransformerBlock(TransformerBlockBase):
         The class of the feed-forward network (FFN) layer to instantiate.
     feed_forward_network_kwargs : dict
         The keyword arguments to pass to the FFN layer constructor.
-    norm_cls : Type[NormalizationLayer]
+    normalization_cls : Type[NormalizationLayer]
         The class of the normalization layer to instantiate.
-    norm_kwargs : dict
+    normalization_kwargs : dict
         The keyword arguments to pass to the normalization layer constructor.
     pre_norm : bool
         If True, applies normalization before attention and FFN (pre-norm architecture).
@@ -44,8 +44,8 @@ class TransformerBlock(TransformerBlockBase):
     attention_kwargs: Dict[str, Any]
     feed_forward_network_cls: Type[FeedForwardNetwork]
     feed_forward_network_kwargs: Dict[str, Any]
-    norm_cls: Type[NormalizationLayer]
-    norm_kwargs: Dict[str, Any]
+    normalization_cls: Type[NormalizationLayer]
+    normalization_kwargs: Dict[str, Any]
     pre_norm: bool = True
     residual_scale: float = 1.0
     dropout_rate: float = 0.1
@@ -64,9 +64,9 @@ class TransformerBlock(TransformerBlockBase):
         residual = hidden_states
         if self.pre_norm:
             # Pre-norm: normalize before the attention layer.
-            hidden_states = self.norm_cls(name="layernorm_1", **self.norm_kwargs)(
-                hidden_states
-            )
+            hidden_states = self.normalization_cls(
+                name="layernorm_1", **self.normalization_kwargs
+            )(hidden_states)
 
         attention_output = self.attention_cls(
             name="attention", **self.attention_kwargs
@@ -75,9 +75,9 @@ class TransformerBlock(TransformerBlockBase):
 
         if not self.pre_norm:
             # Post-norm: normalize after the attention layer.
-            attention_output = self.norm_cls(name="layernorm_1", **self.norm_kwargs)(
-                attention_output
-            )
+            attention_output = self.normalization_cls(
+                name="layernorm_1", **self.normalization_kwargs
+            )(attention_output)
 
         # Residual connection with optional scaling.
         hidden_states = residual + self.residual_scale * attention_output
@@ -86,9 +86,9 @@ class TransformerBlock(TransformerBlockBase):
         residual = hidden_states
         if self.pre_norm:
             # Pre-norm: normalize before the FFN.
-            hidden_states = self.norm_cls(name="layernorm_2", **self.norm_kwargs)(
-                hidden_states
-            )
+            hidden_states = self.normalization_cls(
+                name="layernorm_2", **self.normalization_kwargs
+            )(hidden_states)
 
         feedforward_output = self.feed_forward_network_cls(
             name="ffn", **self.feed_forward_network_kwargs
@@ -97,9 +97,9 @@ class TransformerBlock(TransformerBlockBase):
 
         if not self.pre_norm:
             # Post-norm: normalize after the FFN.
-            feedforward_output = self.norm_cls(name="layernorm_2", **self.norm_kwargs)(
-                feedforward_output
-            )
+            feedforward_output = self.normalization_cls(
+                name="layernorm_2", **self.normalization_kwargs
+            )(feedforward_output)
 
         # Residual connection with optional scaling.
         hidden_states = residual + self.residual_scale * feedforward_output

@@ -4,8 +4,10 @@ import pytest
 from flax import linen as nn
 
 from sophia.model.blocks.transformer_block import TransformerBlock
+from sophia.model.layers.activations import GELUActivation
 from sophia.model.layers.attentions import MultiHeadDotProductAttention
 from sophia.model.layers.feed_forwards import PositionwiseFeedForward
+from sophia.model.layers.normalizations import LayerNormalization
 
 # ------------------------------------------------------------------------------
 # Configuration similar to GPT-2 (using smaller dimensions for testing)
@@ -14,7 +16,7 @@ hidden_size = 64
 num_heads = 4
 dropout_rate = 0.1
 ffn_multiplier = 4
-norm_kwargs = {"epsilon": 1e-5}
+normalization_kwargs = {"epsilon": 1e-5}
 
 attention_kwargs = {
     "hidden_size": hidden_size,
@@ -25,7 +27,7 @@ feed_forward_network_kwargs = {
     "hidden_size": hidden_size,
     "ffn_multiplier": ffn_multiplier,
     "dropout_rate": dropout_rate,
-    "activation": nn.gelu,  # GPT-2 uses GELU
+    "activation": GELUActivation(),
 }
 
 # For GPT-2, the standard Transformer block is usually configured with post‑norm.
@@ -34,9 +36,9 @@ default_block_config = dict(
     attention_kwargs=attention_kwargs,
     feed_forward_network_cls=PositionwiseFeedForward,
     feed_forward_network_kwargs=feed_forward_network_kwargs,
-    norm_cls=nn.LayerNorm,
-    norm_kwargs=norm_kwargs,
-    pre_norm=False,  # post-norm (LayerNorm applied after sub-layer output)
+    normalization_cls=LayerNormalization,
+    normalization_kwargs=normalization_kwargs,
+    pre_norm=False,
     residual_scale=1.0,
     dropout_rate=dropout_rate,
 )

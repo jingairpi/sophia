@@ -1,5 +1,11 @@
+from typing import Any
+
+import jax.numpy as jnp
+from flax import linen as nn
 from pydantic import BaseModel
 
+from sophia.model.base import Model
+from sophia.model.builder import instantiate_from_config
 from sophia.model.config.activation import ActivationConfig
 from sophia.model.config.attention import AttentionConfig
 from sophia.model.config.embeddings import (
@@ -10,6 +16,10 @@ from sophia.model.config.feed_forward import FeedForwardConfig
 from sophia.model.config.normalization import NormalizationConfig
 from sophia.model.config.projection import OutputProjectionConfig
 from sophia.model.config.transformer_block import TransformerBlockConfig
+from sophia.model.layers.activations import GELUActivation
+from sophia.model.layers.attentions import MultiHeadDotProductAttention
+from sophia.model.layers.feed_forwards import PositionwiseFeedForward
+from sophia.model.layers.normalizations import LayerNormalization
 
 
 # -----------------------------------------------------------------------------
@@ -72,7 +82,7 @@ class GPT2Config(BaseModel):
     hidden size, etc.) are provided via a nested GPT2Params instance.
     """
 
-    # Hyperparameters (e.g., small, medium, large).
+    target: str = "sophia.configs.gpt2.GPT2Model"
     params: GPT2Params
 
     # Building block configurations.
@@ -89,6 +99,7 @@ class GPT2Config(BaseModel):
         It composes the full model configuration using the provided hyperparameters.
         """
         return cls(
+            target="sophia.configs.gpt2.GPT2Model",
             params=params,
             token_embedding=TokenEmbeddingConfig(
                 target="sophia.model.layers.embeddings.TokenEmbedding",
@@ -97,7 +108,7 @@ class GPT2Config(BaseModel):
             ),
             positional_embedding=PositionalEmbeddingConfig(
                 target="sophia.model.layers.embeddings.PositionalEmbedding",
-                max_length=params.n_positions,
+                max_seq_length=params.n_positions,
                 hidden_size=params.hidden_size,
             ),
             transformer_block=TransformerBlockConfig(
@@ -105,30 +116,21 @@ class GPT2Config(BaseModel):
                 pre_norm=False,
                 residual_scale=1.0,
                 dropout_rate=params.dropout_rate,
-                # Nested configuration for the attention sub-module.
-                attention=AttentionConfig(
-                    target="sophia.model.layers.attentions.MultiHeadDotProductAttention",
-                    hidden_size=params.hidden_size,
-                    # Typically, num_heads = hidden_size // head_dim (e.g., 64).
-                    # For simplicity, you might fix this ratio or provide an extra parameter.
-                    num_heads=params.hidden_size // 64,
-                    dropout_rate=params.dropout_rate,
-                ),
-                # Nested configuration for the feed-forward sub-module.
-                feed_forward=FeedForwardConfig(
-                    target="sophia.model.layers.feed_forwards.PositionwiseFeedForward",
-                    hidden_size=params.hidden_size,
-                    ffn_multiplier=params.ffn_multiplier,
-                    dropout_rate=params.dropout_rate,
-                    activation=ActivationConfig(
-                        target="sophia.model.layers.activations.GELUActivation"
-                    ),
-                ),
-                # Nested configuration for the normalization sub-module.
-                norm=NormalizationConfig(
-                    target="sophia.model.layers.normalizations.LayerNormalization",
-                    epsilon=1e-5,
-                ),
+                attention_cls=MultiHeadDotProductAttention,
+                attention_kwargs={
+                    "hidden_size": params.hidden_size,
+                    "num_heads": params.hidden_size // 64,  # assuming head_dim is 64
+                    "dropout_rate": params.dropout_rate,
+                },
+                feed_forward_network_cls=PositionwiseFeedForward,
+                feed_forward_network_kwargs={
+                    "hidden_size": params.hidden_size,
+                    "ffn_multiplier": params.ffn_multiplier,
+                    "dropout_rate": params.dropout_rate,
+                    "activation": GELUActivation(),
+                },
+                normalization_cls=LayerNormalization,
+                normalization_kwargs={"epsilon": 1e-5},
             ),
             projection=OutputProjectionConfig(
                 target="sophia.model.layers.projections.OutputProjection",
@@ -136,3 +138,54 @@ class GPT2Config(BaseModel):
                 output_size=params.vocab_size,
             ),
         )
+
+
+# ---------------------------------------------------------------------------
+# GPT2Model: A full implementation of GPT-2 assembled from the configuration.
+# ---------------------------------------------------------------------------
+class GPT2Model(Model, nn.Module):
+    """
+    GPT2Model is a concrete implementation of GPT-2 built entirely from a configuration blueprint.
+
+    It assembles its building blocks (token embedding, positional embedding, a stack of transformer
+    blocks, and output projection) based on the provided GPT2Config. All hyperparameters and submodule
+    configurations are specified in the config.
+
+    Attributes:
+        config: A GPT2Config instance that defines the architecture and hyperparameters.
+    """
+
+    config: GPT2Config
+
+    @nn.compact
+    def __call__(self, input_ids, deterministic: bool = True):
+        # Instantiate token embedding.
+        token_embed = instantiate_from_config(self.config.token_embedding)
+        x = token_embed(input_ids)  # Shape: [batch, seq_length, hidden_size]
+
+        # Instantiate positional embedding.
+        pos_embed = instantiate_from_config(self.config.positional_embedding)
+        B, T = input_ids.shape
+        pos_ids = jnp.arange(T)[None, :]  # Shape: [1, T]
+        x = x + pos_embed(pos_ids)  # Add positional embeddings.
+
+        # Stack transformer blocks.
+        for i in range(self.config.params.n_layer):
+            block = instantiate_from_config(self.config.transformer_block)
+            x = block(x, deterministic=deterministic)
+
+        # Instantiate normalization from flattened configuration.
+        normalization_cls = self.config.transformer_block.normalization_cls
+        normalization_kwargs = self.config.transformer_block.normalization_kwargs
+        normalization = normalization_cls(**normalization_kwargs)
+        x = normalization(x)
+
+        # Instantiate the output projection.
+        projection = instantiate_from_config(self.config.projection)
+        logits = projection(x)
+        return logits
+
+    def init_params(self, rng_key: Any) -> Any:
+        # Initialize model parameters using a dummy input.
+        dummy_input = jnp.ones((1, 1), dtype=jnp.int32)
+        return self.init(rng_key, dummy_input)
