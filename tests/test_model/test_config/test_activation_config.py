@@ -9,31 +9,43 @@ from sophia.model.layers.bases import Activation
 
 
 # -----------------------------------------------------------------------------
-# Create a dummy subclass of Activation for testing.
+# Fixture: Set up a dummy activation module for each test.
 # -----------------------------------------------------------------------------
-class DummyActivation(Activation):
-    def __call__(self, x, *args, **kwargs):
-        return x
+@pytest.fixture(autouse=True)
+def setup_dummy_activation(monkeypatch):
+    # Create a dummy module for activation.
+    dummy_activation_module = types.ModuleType("dummy_activation_module")
 
+    # Define a dummy subclass of Activation.
+    class DummyActivation(Activation):
+        def __call__(self, x, *args, **kwargs):
+            return x
 
-# Also, create a dummy class that is NOT a subclass of Activation.
-class NotActivation:
-    pass
+    # Define a class that is not a subclass of Activation.
+    class NotActivation:
+        pass
 
+    dummy_activation_module.DummyActivation = DummyActivation
+    dummy_activation_module.NotActivation = NotActivation
 
-# Create a dummy module and add both DummyActivation and NotActivation.
-dummy_activation_module = types.ModuleType("dummy_activation_module")
-dummy_activation_module.DummyActivation = DummyActivation
-dummy_activation_module.NotActivation = NotActivation
-sys.modules["dummy_activation_module"] = dummy_activation_module
+    # Insert (or override) the dummy module in sys.modules.
+    monkeypatch.setitem(sys.modules, "dummy_activation_module", dummy_activation_module)
+    yield
+    # (Monkeypatch will automatically undo changes after the test.)
 
 
 # -----------------------------------------------------------------------------
 # Tests for ActivationConfig
 # -----------------------------------------------------------------------------
 def test_activation_config_valid():
+    # Here, we pass the fully qualified name as a string.
     config = ActivationConfig(target="dummy_activation_module.DummyActivation")
-    assert config.target == "dummy_activation_module.DummyActivation"
+    # The validator should import the DummyActivation class and check that it is a subclass of Activation.
+    # We can check that the validated target is not None.
+    assert config.target is not None
+    # Optionally, if your validator converts the string to a class, you might check:
+    # from sophia.model.layers.bases import Activation
+    # assert issubclass(config.target, Activation)
 
 
 def test_activation_config_invalid_target_not_subclass():

@@ -58,7 +58,7 @@ def test_feed_forward_config_valid():
         hidden_size=512,
         ffn_multiplier=4,
         dropout_rate=0.2,
-        activation=ActivationConfig(target="dummy_activation_module.DummyActivation"),
+        activation=DummyActivation(),
     )
     assert config.target == "dummy_ffn_module.DummyFeedForward"
     assert config.hidden_size == 512
@@ -74,9 +74,7 @@ def test_feed_forward_config_invalid_target():
             hidden_size=512,
             ffn_multiplier=4,
             dropout_rate=0.2,
-            activation=ActivationConfig(
-                target="dummy_activation_module.DummyActivation"
-            ),
+            activation=DummyActivation(),
         )
     # We expect the error message to mention "must be a subclass of FeedForwardNetwork".
     assert "must be a subclass of FeedForwardNetwork" in str(excinfo.value)
@@ -90,7 +88,7 @@ def test_feed_forward_config_invalid_activation():
             hidden_size=512,
             ffn_multiplier=4,
             dropout_rate=0.2,
-            activation=ActivationConfig(target="dummy_activation_module.NotActivation"),
+            activation=DummyActivation(),
         )
     # We expect the error message to mention "must be a subclass of Activation"
     assert "must be a subclass of Activation" in str(excinfo.value)
