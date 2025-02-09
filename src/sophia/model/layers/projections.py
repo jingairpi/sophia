@@ -2,8 +2,10 @@ import jax.numpy as jnp
 from flax import linen as nn
 
 from sophia.model.layers.bases import ProjectionLayer
+from sophia.model.registry import register_layer
 
 
+@register_layer("OutputProjection")
 class OutputProjection(ProjectionLayer):
     """
     A generic output projection layer that maps hidden representations

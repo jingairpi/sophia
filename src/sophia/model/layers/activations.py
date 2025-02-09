@@ -4,8 +4,10 @@ import jax
 import jax.numpy as jnp
 
 from sophia.model.layers.bases import Activation
+from sophia.model.registry import register_layer
 
 
+@register_layer("GELUActivation")
 class GELUActivation(Activation):
     """
     Implements the Gaussian Error Linear Unit (GELU) activation function.

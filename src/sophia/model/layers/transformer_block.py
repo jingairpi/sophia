@@ -7,6 +7,7 @@ from sophia.model.layers.bases import (
     FeedForwardNetwork,
     NormalizationLayer,
 )
+from sophia.model.registry import register_layer
 
 
 class TransformerBlock(nn.Module):

@@ -2,8 +2,10 @@ import jax.numpy as jnp
 from flax import linen as nn
 
 from sophia.model.layers.bases import EmbeddingLayer
+from sophia.model.registry import register_layer
 
 
+@register_layer("TokenEmbedding")
 class TokenEmbedding(EmbeddingLayer):
     """
     Implements token embeddings for a neural network model.
@@ -44,6 +46,7 @@ class TokenEmbedding(EmbeddingLayer):
         return embedding(input_ids)
 
 
+@register_layer("PositionalEmbedding")
 class PositionalEmbedding(EmbeddingLayer):
     """
     Implements positional embeddings for a neural network model.
