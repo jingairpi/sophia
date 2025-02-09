@@ -1,5 +1,3 @@
-from typing import Any
-
 from flax import linen as nn
 
 from sophia.model.layers.bases import Activation, FeedForwardNetwork
@@ -17,11 +15,7 @@ class PositionwiseFeedForward(FeedForwardNetwork):
         activation (Activation): The activation function to apply between the two dense layers.
     """
 
-    hidden_size: int
-    ffn_multiplier: int
-    dropout_rate: float = 0.1
-
-    activation: Any = None
+    activation: Activation
 
     @nn.compact
     def __call__(self, hidden_states, deterministic=False):
