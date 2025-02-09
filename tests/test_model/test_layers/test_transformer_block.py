@@ -3,11 +3,11 @@ import jax.numpy as jnp
 import pytest
 from flax import linen as nn
 
-from sophia.model.blocks.transformer_block import TransformerBlock
 from sophia.model.layers.activations import GELUActivation
 from sophia.model.layers.attentions import MultiHeadDotProductAttention
 from sophia.model.layers.feed_forwards import PositionwiseFeedForward
-from sophia.model.layers.normalizations import LayerNormalization
+from sophia.model.layers.normalizations import LayerNormalization, RMSNormalization
+from sophia.model.layers.transformer_block import TransformerBlock
 
 # ------------------------------------------------------------------------------
 # Configuration similar to GPT-2 (using smaller dimensions for testing)
@@ -18,26 +18,24 @@ dropout_rate = 0.1
 ffn_multiplier = 4
 normalization_kwargs = {"epsilon": 1e-5}
 
-attention_kwargs = {
-    "hidden_size": hidden_size,
-    "num_heads": num_heads,
-    "dropout_rate": dropout_rate,
-}
-feed_forward_network_kwargs = {
-    "hidden_size": hidden_size,
-    "ffn_multiplier": ffn_multiplier,
-    "dropout_rate": dropout_rate,
-    "activation": GELUActivation(),
-}
+# Initialize Layer Instances
+attention_layer = MultiHeadDotProductAttention(
+    hidden_size=hidden_size, num_heads=num_heads, dropout_rate=dropout_rate
+)
 
-# For GPT-2, the standard Transformer block is usually configured with post‑norm.
+feed_forward_network = PositionwiseFeedForward(
+    hidden_size=hidden_size,
+    ffn_multiplier=ffn_multiplier,
+    dropout_rate=dropout_rate,
+    activation=GELUActivation(),
+)
+
+# Default Transformer Block Config
 default_block_config = dict(
-    attention_cls=MultiHeadDotProductAttention,
-    attention_kwargs=attention_kwargs,
-    feed_forward_network_cls=PositionwiseFeedForward,
-    feed_forward_network_kwargs=feed_forward_network_kwargs,
-    normalization_cls=LayerNormalization,
-    normalization_kwargs=normalization_kwargs,
+    attention=attention_layer,
+    feed_forward_network=feed_forward_network,
+    normalization_1=LayerNormalization(**normalization_kwargs),
+    normalization_2=LayerNormalization(**normalization_kwargs),
     pre_norm=False,
     residual_scale=1.0,
     dropout_rate=dropout_rate,
@@ -51,7 +49,6 @@ def test_transformer_block_output_shape():
     batch_size, seq_length = 8, 16
     rng = jax.random.PRNGKey(0)
     input_tensor = jax.random.normal(rng, (batch_size, seq_length, hidden_size))
-    # For simplicity, use a full (all-True) attention mask.
     mask = jnp.ones((batch_size, 1, seq_length, seq_length), dtype=bool)
 
     transformer_block = TransformerBlock(**default_block_config)
@@ -91,8 +88,7 @@ def test_transformer_block_deterministic():
 
 
 # ------------------------------------------------------------------------------
-# Test 3: With dropout enabled (deterministic=False) and different dropout RNG keys,
-#          the outputs should differ.
+# Test 3: Dropout variability with different RNG keys.
 # ------------------------------------------------------------------------------
 def test_transformer_block_dropout_variability():
     batch_size, seq_length = 4, 10
@@ -124,11 +120,11 @@ def test_transformer_block_dropout_variability():
     )
     assert not jnp.allclose(
         out1, out2, atol=1e-6
-    ), "Outputs with dropout enabled should differ when using different dropout RNG keys."
+    ), "Outputs with different dropout RNG keys should differ."
 
 
 # ------------------------------------------------------------------------------
-# Test 4: Check that gradients can be computed and are finite.
+# Test 4: Gradient check.
 # ------------------------------------------------------------------------------
 def test_transformer_block_gradients():
     batch_size, seq_length = 2, 8
@@ -154,12 +150,47 @@ def test_transformer_block_gradients():
 
 
 # ------------------------------------------------------------------------------
-# Test 5: Causal mask effect – verify that a causal mask (lower triangular) changes the output.
+# Test 5: Different Normalization Layers
+# ------------------------------------------------------------------------------
+@pytest.mark.parametrize("normalization_cls", [LayerNormalization, RMSNormalization])
+def test_transformer_block_with_different_normalization(normalization_cls):
+    block_config = default_block_config.copy()
+
+    if normalization_cls == RMSNormalization:
+        block_config["normalization_1"] = normalization_cls(
+            features=hidden_size, **normalization_kwargs
+        )
+        block_config["normalization_2"] = normalization_cls(
+            features=hidden_size, **normalization_kwargs
+        )
+    else:
+        block_config["normalization_1"] = normalization_cls(**normalization_kwargs)
+        block_config["normalization_2"] = normalization_cls(**normalization_kwargs)
+
+    batch_size, seq_length = 4, 12
+    rng = jax.random.PRNGKey(10)
+    input_tensor = jax.random.normal(rng, (batch_size, seq_length, hidden_size))
+    mask = jnp.ones((batch_size, 1, seq_length, seq_length), dtype=bool)
+
+    transformer_block = TransformerBlock(**block_config)
+    variables = transformer_block.init(
+        jax.random.PRNGKey(11), input_tensor, attention_mask=mask, deterministic=True
+    )
+    output = transformer_block.apply(
+        variables, input_tensor, attention_mask=mask, deterministic=True
+    )
+
+    assert output.shape == input_tensor.shape, "Output shape should match input shape."
+
+
+# ------------------------------------------------------------------------------
+# Test 6: Causal mask effect – verify that a causal mask (lower triangular) changes the output.
 # ------------------------------------------------------------------------------
 def test_transformer_block_causal_mask_effect():
     batch_size, seq_length = 2, 8
     rng = jax.random.PRNGKey(10)
     input_tensor = jax.random.normal(rng, (batch_size, seq_length, hidden_size))
+
     # Create a causal (lower-triangular) mask.
     causal_mask = jnp.tril(jnp.ones((seq_length, seq_length), dtype=bool))
     causal_mask = causal_mask[jnp.newaxis, jnp.newaxis, :, :].repeat(batch_size, axis=0)
@@ -187,17 +218,17 @@ def test_transformer_block_causal_mask_effect():
 
 
 # ------------------------------------------------------------------------------
-# Test 6: pre-norm vs. post-norm configuration differences.
+# Test 7: pre-norm vs. post-norm configuration.
 # ------------------------------------------------------------------------------
 @pytest.mark.parametrize("pre_norm", [True, False])
 def test_transformer_block_norm_configuration(pre_norm):
+    block_config = default_block_config.copy()
+    block_config["pre_norm"] = pre_norm
+
     batch_size, seq_length = 4, 12
     rng = jax.random.PRNGKey(12)
     input_tensor = jax.random.normal(rng, (batch_size, seq_length, hidden_size))
     mask = jnp.ones((batch_size, 1, seq_length, seq_length), dtype=bool)
-
-    block_config = default_block_config.copy()
-    block_config["pre_norm"] = pre_norm
 
     transformer_block = TransformerBlock(**block_config)
     variables = transformer_block.init(
@@ -206,7 +237,5 @@ def test_transformer_block_norm_configuration(pre_norm):
     output = transformer_block.apply(
         variables, input_tensor, attention_mask=mask, deterministic=True
     )
-    # We only verify that the block runs and the output has the correct shape.
-    assert (
-        output.shape == input_tensor.shape
-    ), "Output shape should match input shape regardless of norm configuration."
+
+    assert output.shape == input_tensor.shape, "Output shape should match input shape."
