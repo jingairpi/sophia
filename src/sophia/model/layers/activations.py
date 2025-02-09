@@ -1,4 +1,7 @@
-import jax.nn
+import math
+
+import jax
+import jax.numpy as jnp
 
 from sophia.model.layers.bases import Activation
 
@@ -31,4 +34,14 @@ class GELUActivation(Activation):
         Returns:
             The tensor after applying GELU activation.
         """
-        return jax.nn.gelu(input_tensor)
+        return (
+            0.5
+            * input_tensor
+            * (
+                1.0
+                + jnp.tanh(
+                    math.sqrt(2.0 / math.pi)
+                    * (input_tensor + 0.044715 * jnp.power(input_tensor, 3))
+                )
+            )
+        )
