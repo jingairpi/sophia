@@ -2,7 +2,6 @@ import jax.numpy as jnp
 from flax import linen as nn
 
 from sophia.model.layers.bases import NormalizationLayer
-from sophia.model.registry import register_layer
 
 
 class LayerNormalization(NormalizationLayer):

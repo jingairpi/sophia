@@ -2,10 +2,8 @@ import jax.numpy as jnp
 from flax import linen as nn
 
 from sophia.model.layers.bases import AttentionLayer
-from sophia.model.registry import register_layer
 
 
-@register_layer("MultiHeadDotProductAttention")
 class MultiHeadDotProductAttention(AttentionLayer):
     """
     Implements Multi-Head Dot Product Attention manually using Dense layers and the attention mechanism.
