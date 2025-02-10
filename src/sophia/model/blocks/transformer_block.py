@@ -8,8 +8,10 @@ from sophia.model.layers.bases import (
     FeedForwardNetwork,
     NormalizationLayer,
 )
+from sophia.model.registry import register
 
 
+@register
 class TransformerBlock(TransformerBlockBase):
     """
     A generic Transformer block that uses an attention layer, a feed-forward network,
