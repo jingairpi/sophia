@@ -1,5 +1,3 @@
-from typing import Any
-
 from flax import linen as nn
 
 from sophia.model.layers.bases import Activation, FeedForwardNetwork
@@ -16,14 +14,16 @@ class PositionwiseFeedForward(FeedForwardNetwork):
     it processes each position in the sequence independently, without considering neighboring positions.
 
     Attributes:
-        activation (Activation): The activation function to apply between the two dense layers.
+        hidden_size (int): The hidden size of the input.
+        ffn_multiplier (int): The expansion factor for the intermediate layer.
+        activation (Callable): The activation function to apply between the dense layers.
+        dropout_rate (float): The dropout rate applied within the feed-forward network.
     """
 
-    hidden_size: int
-    ffn_multiplier: int
-    dropout_rate: float = 0.1
-
-    activation: Any = None
+    # hidden_size: int
+    # ffn_multiplier: int
+    activation: Activation
+    # dropout_rate: float = 0.1
 
     @nn.compact
     def __call__(self, hidden_states, deterministic=False):
@@ -43,11 +43,8 @@ class PositionwiseFeedForward(FeedForwardNetwork):
             3. Apply the second dense layer (`dense_2`) to reduce the dimensionality.
             4. Apply dropout for regularization (skipped if `deterministic=True`).
         """
-        # Initialize the first dense layer to expand the hidden size
         dense_1 = nn.Dense(self.hidden_size * self.ffn_multiplier)
-        # Initialize the second dense layer to reduce back to the original hidden size
         dense_2 = nn.Dense(self.hidden_size)
-        # Initialize dropout for regularization
         dropout = nn.Dropout(rate=self.dropout_rate)
 
         x = dense_1(hidden_states)
