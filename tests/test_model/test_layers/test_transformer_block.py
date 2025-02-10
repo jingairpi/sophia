@@ -10,7 +10,7 @@ from sophia.model.layers.normalizations import LayerNormalization
 from sophia.model.layers.transformer_block import TransformerBlock
 
 # ------------------------------------------------------------------------------
-# Configuration similar to GPT-2 (using smaller dimensions for testing)
+# Test configuration values (using smaller dimensions for testing)
 # ------------------------------------------------------------------------------
 hidden_size = 64
 num_heads = 4
@@ -18,6 +18,7 @@ dropout_rate = 0.1
 ffn_multiplier = 4
 normalization_kwargs = {"epsilon": 1e-5}
 
+# Build instantiated submodules using the provided kwargs.
 attention_kwargs = {
     "hidden_size": hidden_size,
     "num_heads": num_heads,
@@ -30,15 +31,13 @@ feed_forward_network_kwargs = {
     "activation": GELUActivation(),
 }
 
-# For GPT-2, the standard Transformer block is usually configured with post‑norm.
+# Instead of separate "cls" and "kwargs" keys, we instantiate the submodules directly.
 default_block_config = dict(
-    attention_cls=MultiHeadDotProductAttention,
-    attention_kwargs=attention_kwargs,
-    feed_forward_network_cls=PositionwiseFeedForward,
-    feed_forward_network_kwargs=feed_forward_network_kwargs,
-    normalization_cls=LayerNormalization,
-    normalization_kwargs=normalization_kwargs,
-    pre_norm=False,
+    attention=MultiHeadDotProductAttention(**attention_kwargs),
+    feed_forward=PositionwiseFeedForward(**feed_forward_network_kwargs),
+    normalization_1=LayerNormalization(**normalization_kwargs),
+    normalization_2=LayerNormalization(**normalization_kwargs),
+    pre_norm=False,  # Using post-norm (i.e. normalization applied after submodules)
     residual_scale=1.0,
     dropout_rate=dropout_rate,
 )
@@ -105,7 +104,6 @@ def test_transformer_block_dropout_variability():
     variables = transformer_block.init(
         init_rng, input_tensor, attention_mask=mask, deterministic=False
     )
-
     dropout_rng1 = jax.random.PRNGKey(6)
     dropout_rng2 = jax.random.PRNGKey(7)
     out1 = transformer_block.apply(
@@ -196,6 +194,7 @@ def test_transformer_block_norm_configuration(pre_norm):
     input_tensor = jax.random.normal(rng, (batch_size, seq_length, hidden_size))
     mask = jnp.ones((batch_size, 1, seq_length, seq_length), dtype=bool)
 
+    # Create a copy of the default configuration and override pre_norm.
     block_config = default_block_config.copy()
     block_config["pre_norm"] = pre_norm
 
@@ -206,7 +205,7 @@ def test_transformer_block_norm_configuration(pre_norm):
     output = transformer_block.apply(
         variables, input_tensor, attention_mask=mask, deterministic=True
     )
-    # We only verify that the block runs and the output has the correct shape.
+    # Verify that the block runs and the output shape is correct.
     assert (
         output.shape == input_tensor.shape
     ), "Output shape should match input shape regardless of norm configuration."

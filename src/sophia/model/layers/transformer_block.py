@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Type
+from typing import Any, Optional
 
 from flax import linen as nn
 
@@ -14,40 +14,32 @@ from sophia.model.registry import register
 @register
 class TransformerBlock(TransformerBlockBase):
     """
-    A generic Transformer block that uses an attention layer, a feed-forward network,
-    and two normalization layers. This block supports both pre- and post-normalization
-    strategies and allows scaling the residual connection.
+    A generic Transformer block that consists of an attention layer, a feed-forward network (FFN),
+    and two normalization layers. It supports both pre-normalization and post-normalization strategies.
 
     Attributes
     ----------
-    attention_cls : Type[AttentionLayer]
-        The class of the attention layer to instantiate.
-    attention_kwargs : dict
-        The keyword arguments to pass to the attention layer constructor.
-    feed_forward_network_cls : Type[FeedForwardNetwork]
-        The class of the feed-forward network (FFN) layer to instantiate.
-    feed_forward_network_kwargs : dict
-        The keyword arguments to pass to the FFN layer constructor.
-    normalization_cls : Type[NormalizationLayer]
-        The class of the normalization layer to instantiate.
-    normalization_kwargs : dict
-        The keyword arguments to pass to the normalization layer constructor.
+    attention : AttentionLayer
+        An instantiated attention layer.
+    feed_forward : FeedForwardNetwork
+        An instantiated feed-forward network (FFN) layer.
+    normalization_1 : NormalizationLayer
+        The normalization layer applied before/after the attention layer.
+    normalization_2 : NormalizationLayer
+        The normalization layer applied before/after the feed-forward network.
     pre_norm : bool
-        If True, applies normalization before attention and FFN (pre-norm architecture).
-        If False, applies normalization after attention and FFN (post-norm architecture).
+        If True, applies LayerNorm before attention and FFN (pre-norm architecture).
+        If False, applies LayerNorm after attention and FFN (post-norm architecture).
     residual_scale : float
-        A scaling factor for the residual connections, useful for stability and
-        tuning training dynamics.
+        A scaling factor for the residual connections, used for stabilizing training.
     dropout_rate : float
-        The dropout probability. Applied after attention and FFN operations.
+        The dropout probability applied after the attention and FFN operations.
     """
 
-    attention_cls: Type[AttentionLayer]
-    attention_kwargs: Dict[str, Any]
-    feed_forward_network_cls: Type[FeedForwardNetwork]
-    feed_forward_network_kwargs: Dict[str, Any]
-    normalization_cls: Type[NormalizationLayer]
-    normalization_kwargs: Dict[str, Any]
+    attention: AttentionLayer
+    feed_forward: FeedForwardNetwork
+    normalization_1: NormalizationLayer  # Fixed typo
+    normalization_2: NormalizationLayer  # Fixed typo
     pre_norm: bool = True
     residual_scale: float = 1.0
     dropout_rate: float = 0.1
@@ -55,55 +47,53 @@ class TransformerBlock(TransformerBlockBase):
     @nn.compact
     def __call__(
         self,
-        hidden_states,
+        hidden_states: Any,
         attention_mask: Optional[Any] = None,
         deterministic: bool = False,
     ):
-        # Create a dropout module to reuse within this forward pass.
+        """
+        Forward pass of the Transformer block.
+
+        Args:
+            hidden_states (Any): The input tensor of shape [batch_size, seq_length, hidden_size].
+            attention_mask (Optional[Any]): Masking tensor of shape [batch_size, 1, seq_length, seq_length].
+            deterministic (bool): If True, disables dropout for inference.
+
+        Returns:
+            Any: The transformed output tensor of shape [batch_size, seq_length, hidden_size].
+        """
         dropout = nn.Dropout(rate=self.dropout_rate)
 
-        # --- Attention sub-layer ---
+        # --- Attention Sub-layer ---
         residual = hidden_states
         if self.pre_norm:
-            # Pre-norm: normalize before the attention layer.
-            hidden_states = self.normalization_cls(
-                name="layernorm_1", **self.normalization_kwargs
-            )(hidden_states)
+            hidden_states = self.normalization_1(hidden_states)
 
-        attention_output = self.attention_cls(
-            name="attention", **self.attention_kwargs
-        )(hidden_states, attention_mask=attention_mask, deterministic=deterministic)
+        attention_output = self.attention(
+            hidden_states, attention_mask=attention_mask, deterministic=deterministic
+        )
         attention_output = dropout(attention_output, deterministic=deterministic)
 
         if not self.pre_norm:
-            # Post-norm: normalize after the attention layer.
-            attention_output = self.normalization_cls(
-                name="layernorm_1", **self.normalization_kwargs
-            )(attention_output)
+            attention_output = self.normalization_1(attention_output)
 
-        # Residual connection with optional scaling.
+        # Residual connection with optional scaling
         hidden_states = residual + self.residual_scale * attention_output
 
-        # --- Feed-forward sub-layer ---
+        # --- Feed-Forward Sub-layer ---
         residual = hidden_states
         if self.pre_norm:
-            # Pre-norm: normalize before the FFN.
-            hidden_states = self.normalization_cls(
-                name="layernorm_2", **self.normalization_kwargs
-            )(hidden_states)
+            hidden_states = self.normalization_2(hidden_states)
 
-        feedforward_output = self.feed_forward_network_cls(
-            name="ffn", **self.feed_forward_network_kwargs
-        )(hidden_states, deterministic=deterministic)
+        feedforward_output = self.feed_forward(
+            hidden_states, deterministic=deterministic
+        )
         feedforward_output = dropout(feedforward_output, deterministic=deterministic)
 
         if not self.pre_norm:
-            # Post-norm: normalize after the FFN.
-            feedforward_output = self.normalization_cls(
-                name="layernorm_2", **self.normalization_kwargs
-            )(feedforward_output)
+            feedforward_output = self.normalization_2(feedforward_output)
 
-        # Residual connection with optional scaling.
+        # Residual connection with optional scaling
         hidden_states = residual + self.residual_scale * feedforward_output
 
         return hidden_states
