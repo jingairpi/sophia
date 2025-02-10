@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+import jax.numpy as jnp
+
 
 class Model(ABC):
     """
@@ -9,13 +11,16 @@ class Model(ABC):
     """
 
     @abstractmethod
-    def init_params(self, rng_key: Any) -> Any:
+    def init(self, rng_key: Any, sample_input: jnp.ndarray) -> Any:
         """
         Initialize and return the model parameters.
 
         Args:
             rng_key: A random key for parameter initialization.
+            sample_input: A representative input that defines the shape
+                          Flax needs for building the parameter structure.
 
         Returns:
-            Initialized model parameters.
+            A dictionary (or nested structure) containing the initialized
+            model parameters.
         """
