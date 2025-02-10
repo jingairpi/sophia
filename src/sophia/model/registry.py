@@ -1,5 +1,5 @@
 # Global registry for all layers building blocks.
-LAYER_REGISTRY = {}
+_LAYER_REGISTRY = {}
 
 
 def register_layer(name: str):
@@ -8,7 +8,7 @@ def register_layer(name: str):
     """
 
     def decorator(cls):
-        LAYER_REGISTRY[name] = cls
+        _LAYER_REGISTRY[name] = cls
         return cls
 
     return decorator
@@ -20,6 +20,6 @@ def get_layer_class(name: str):
     This function is internal to the model package.
     """
     try:
-        return LAYER_REGISTRY[name]
+        return _LAYER_REGISTRY[name]
     except KeyError:
         raise ValueError(f"Layer type '{name}' is not registered.")
