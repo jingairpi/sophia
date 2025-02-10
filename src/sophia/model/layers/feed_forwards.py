@@ -3,8 +3,10 @@ from typing import Any
 from flax import linen as nn
 
 from sophia.model.layers.bases import Activation, FeedForwardNetwork
+from sophia.model.registry import register
 
 
+@register
 class PositionwiseFeedForward(FeedForwardNetwork):
     """
     Implements the Positionwise Feed-Forward layer, commonly used in Transformer models.

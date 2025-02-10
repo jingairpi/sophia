@@ -2,8 +2,10 @@ import jax.numpy as jnp
 from flax import linen as nn
 
 from sophia.model.layers.bases import NormalizationLayer
+from sophia.model.registry import register
 
 
+@register
 class LayerNormalization(NormalizationLayer):
     """
     Implements Layer Normalization, which normalizes inputs across features.
@@ -36,6 +38,7 @@ class LayerNormalization(NormalizationLayer):
         return layernorm(x, *args, **kwargs)
 
 
+@register
 class RMSNormalization(NormalizationLayer):
     """
     Implements Root Mean Square (RMS) Normalization.
