@@ -4,11 +4,11 @@ import types
 import pytest
 from pydantic import ValidationError
 
-from sophia.model.blocks.bases import TransformerBlockBase
 from sophia.model.layers.bases import (
     AttentionLayer,
     FeedForwardNetwork,
     NormalizationLayer,
+    TransformerBlockBase,
 )
 
 # -----------------------------------------------------------------------------
