@@ -3,15 +3,14 @@ import pytest
 from sophia.model.registry import get_layer_class, register_layer
 
 
-@register_layer("DummyLayer")
-class DummyLayer:
+@register_layer("FooLayer")
+class FooLayer:
     pass
 
 
 def test_registry_registration():
-    # Check that "DummyLayer" is registered.
-    layer_cls = get_layer_class("DummyLayer")
-    assert layer_cls is DummyLayer
+    layer_cls = get_layer_class("FooLayer")
+    assert layer_cls is FooLayer
 
 
 def test_registry_invalid_layer():
