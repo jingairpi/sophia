@@ -3,11 +3,11 @@ import jax.numpy as jnp
 import pytest
 from flax import linen as nn
 
-from sophia.model.blocks.transformer_block import TransformerBlock
 from sophia.model.layers.activations import GELUActivation
 from sophia.model.layers.attentions import MultiHeadDotProductAttention
 from sophia.model.layers.feed_forwards import PositionwiseFeedForward
 from sophia.model.layers.normalizations import LayerNormalization
+from sophia.model.layers.transformer_block import TransformerBlock
 
 # ------------------------------------------------------------------------------
 # Configuration similar to GPT-2 (using smaller dimensions for testing)

@@ -2,11 +2,11 @@ from typing import Any, Dict, Optional, Type
 
 from flax import linen as nn
 
-from sophia.model.blocks.bases import TransformerBlockBase
 from sophia.model.layers.bases import (
     AttentionLayer,
     FeedForwardNetwork,
     NormalizationLayer,
+    TransformerBlockBase,
 )
 from sophia.model.registry import register
 

@@ -1,7 +1,7 @@
 from typing import Any, Dict, Type
 
-from sophia.model.blocks.bases import TransformerBlockBase
 from sophia.model.config.base import BaseConfig
+from sophia.model.layers.bases import TransformerBlockBase
 
 
 class TransformerBlockConfig(BaseConfig):

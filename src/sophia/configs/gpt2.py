@@ -112,7 +112,7 @@ class GPT2Config(BaseModel):
                 hidden_size=params.hidden_size,
             ),
             transformer_block=TransformerBlockConfig(
-                target="sophia.model.blocks.transformer_block.TransformerBlock",
+                target="sophia.model.layers.transformer_block.TransformerBlock",
                 pre_norm=False,
                 residual_scale=1.0,
                 dropout_rate=params.dropout_rate,
