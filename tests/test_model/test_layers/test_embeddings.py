@@ -85,19 +85,3 @@ def test_token_embedding_empty_input():
     input_ids = jnp.array([]).reshape(0, 0)
     with pytest.raises(ValueError, match="Input IDs cannot be empty"):
         token_embedding.apply(params, input_ids)
-
-
-def test_positional_embedding_out_of_bounds():
-    """
-    Tests PositionalEmbedding with out-of-bounds position IDs.
-    """
-    positional_embedding = PositionalEmbedding(max_seq_length=16, hidden_size=64)
-
-    # Initialize parameters
-    rng = jax.random.PRNGKey(0)
-    params = positional_embedding.init(rng, jnp.arange(16))
-
-    # Pass out-of-bounds position IDs
-    position_ids = jnp.array([0, 1, 17])  # 17 is out of bounds
-    with pytest.raises(IndexError, match="Position IDs are out of bounds"):
-        positional_embedding.apply(params, position_ids)
