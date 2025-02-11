@@ -262,8 +262,8 @@ files = [
 fsspec = {version = "*", optional = true, markers = "extra == \"epath\""}
 importlib_resources = {version = "*", optional = true, markers = "extra == \"epath\""}
 typing_extensions = [
-    {version = "*", optional = true, markers = "extra == \"epath\" or extra == \"epy\""},
     {version = "*", optional = true, markers = "extra == \"epy\""},
+    {version = "*", optional = true, markers = "extra == \"epath\" or extra == \"epy\""},
 ]
 zipp = {version = "*", optional = true, markers = "extra == \"epath\""}
 
@@ -1913,4 +1913,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "c56bfc9f5f8b0932af5c17cd27d1b706751e9f0fc11c3e5b9efe92342a315f89"
+content-hash = "2ccf26f6aabbd898bdf3bb8929280b0772671f6f97dca28ef7b20d46b476b65b"
