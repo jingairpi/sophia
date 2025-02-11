@@ -83,6 +83,4 @@ class PositionalEmbedding(EmbeddingLayer):
             nn.initializers.normal(stddev=0.02),
             (self.max_seq_length, self.hidden_size),
         )
-        if jnp.any(position_ids >= self.max_seq_length) or jnp.any(position_ids < 0):
-            raise IndexError("Position IDs are out of bounds.")
         return embedding[position_ids]
