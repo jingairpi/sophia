@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Any
 
@@ -5,6 +6,17 @@ import jax
 import jax.numpy as jnp
 import optax
 from flax.training import train_state
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
 
 def create_train_step_fn(model: Any, compute_loss_fn: Any):
@@ -23,7 +35,6 @@ def create_train_step_fn(model: Any, compute_loss_fn: Any):
     """
 
     def train_step_fn(state, batch, rng):
-        # Compute loss and gradients with auxiliary outputs (e.g., logits)
         grad_fn = jax.value_and_grad(compute_loss_fn, has_aux=True)
         (loss, logits), grads = grad_fn(state.params, batch, rng)
         new_state = state.apply_gradients(grads=grads)
@@ -73,17 +84,22 @@ class Trainer:
         dummy_input = jnp.ones(
             (optimizer_config["batch_size"], config.n_positions - 1), dtype=jnp.int32
         )
-        # Initialize the model parameters (using Flax's init function).
         params = model.init(rng, dummy_input)["params"]
+        logger.info("Model parameters initialized.")
 
         # Set up the optimizer (here using AdamW from optax).
         tx = optax.adamw(learning_rate=optimizer_config["learning_rate"])
         self.state = train_state.TrainState.create(
             apply_fn=model.apply, params=params, tx=tx
         )
+        logger.info(
+            "Optimizer and training state set up with learning rate %f.",
+            optimizer_config["learning_rate"],
+        )
 
         # Create the jitted training step function, capturing model and compute_loss in a closure.
         self.train_step_fn = create_train_step_fn(self.model, self.compute_loss)
+        logger.info("Training step function created and JIT-compiled.")
 
     def compute_loss(self, params: Any, batch: Any, rng: Any) -> Any:
         """
@@ -128,18 +144,23 @@ class Trainer:
         Returns:
             The final training state after completing the training loop.
         """
+        logger.info("Starting training for %d steps.", num_steps)
         step = 0
         while step < num_steps:
             try:
                 batch = next(iter(self.dataset))
             except StopIteration:
+                logger.info("Dataset exhausted; ending training loop.")
                 break
 
             self.rng, step_rng = jax.random.split(self.rng)
             start_time = time.time()
             self.state, loss, logits = self.train_step_fn(self.state, batch, step_rng)
             elapsed = time.time() - start_time
-            print(f"Step {step}: Loss = {loss:.4f}, Time = {elapsed * 1000:.2f} ms")
+            logger.info(
+                "Step %d: Loss = %.4f, Time = %.2f ms", step, loss, elapsed * 1000
+            )
             step += 1
 
+        logger.info("Training completed after %d steps.", step)
         return self.state
