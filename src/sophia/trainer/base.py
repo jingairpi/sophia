@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 
-class Trainer(ABC):
+class TrainerBase(ABC):
     """
     Abstract base class for trainers.
     Provides methods for performing training steps and executing training
