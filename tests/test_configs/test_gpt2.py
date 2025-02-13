@@ -1,15 +1,13 @@
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 from pydantic import ValidationError
+from transformers import FlaxGPT2Model
+from transformers import GPT2Config as HF_GPT2Config
 
 from sophia.configs.gpt2 import GPT2_SMALL, GPT2Config, GPT2Params
 from sophia.model.builder import build_model
-
-try:
-    from transformers import GPT2Config as HF_GPT2Config
-except ImportError:
-    HF_GPT2Config = None
 
 
 @pytest.fixture
@@ -35,7 +33,6 @@ def test_gpt2_config_from_params():
     assert config.transformer_block.dropout_rate == GPT2_SMALL.dropout_rate
 
 
-@pytest.mark.skipif(HF_GPT2Config is None, reason="Transformers library not installed.")
 def test_gpt2_config_vs_hf():
     """Compare GPT2Config with HuggingFace's GPT-2Config."""
     our_params = GPT2_SMALL

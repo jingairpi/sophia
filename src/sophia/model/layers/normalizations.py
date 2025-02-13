@@ -34,6 +34,9 @@ class LayerNormalization(NormalizationLayer):
         Returns:
             Normalized tensor of the same shape as the input.
         """
+        # Remove 'deterministic' from kwargs if it exists
+        kwargs.pop("deterministic", None)
+
         layernorm = nn.LayerNorm(epsilon=self.epsilon)
         return layernorm(x, *args, **kwargs)
 

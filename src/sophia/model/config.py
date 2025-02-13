@@ -161,3 +161,17 @@ class TransformerBlockConfig(BaseConfig):
     feed_forward: FeedForwardConfig
     normalization_1: NormalizationConfig
     normalization_2: NormalizationConfig
+
+
+# --------------------------------------------------------------------
+# AddOperation Configuration
+# --------------------------------------------------------------------
+class AddOperationConfig(BaseConfig):
+    """
+    Configuration for the AddOperation module.
+
+    This config uses the 'type' field to indicate that the corresponding
+    registered building block is "AddOperation".
+    """
+
+    type: Literal["AddOperation"] = "AddOperation"
