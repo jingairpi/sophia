@@ -40,6 +40,7 @@ class TokenEmbedding(EmbeddingLayer):
         if input_ids.size == 0:
             raise ValueError("Input IDs cannot be empty.")
         embedding = nn.Embed(
+            name="token_embedding",
             num_embeddings=self.vocab_size,
             features=self.hidden_size,
         )
